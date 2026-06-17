@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEVEL UP! 🎂</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #ffe5ec;
+            --panel-bg: rgba(255, 255, 255, 0.98);
+            --ui-border: #ff477e;
+            --ui-shadow: #ff7096;
+            --text-color: #2b2b2b;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#ffc2d1 2px, transparent 2px);
+            background-size: 20px 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 🌪️ SCREEN SHAKE EFFECT */
+        .shake {
+            animation: shakeFX 0.15s linear fast;
+        }
+        @keyframes shakeFX {
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            20% { transform: translate(-1px, -2px) rotate(-1deg); }
+            40% { transform: translate(-3px, 0px) rotate(1deg); }
+            60% { transform: translate(0px, 2px) rotate(0deg); }
+            80% { transform: translate(1px, -1px) rotate(1deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+
+        /* ✉️ CHAOTIC ENVELOPE STYLING */
+        .envelope-wrapper {
+            position: relative;
+            width: 280px;
+            height: 180px;
+            background-color: var(--ui-border);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 12px 0px #c9184a;
+            z-index: 10;
+            transition: transform 0.1s ease;
+        }
+        .envelope-wrapper:active {
+            transform: scale(0.95);
+        }
+        .envelope-wrapper::before {
+            content: ''; position: absolute; top: 0; z-index: 3;
+            border-left: 140px solid transparent; border-right: 140px solid transparent;
+            border-bottom: 90px solid #ff7096; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+        }
+        .envelope-wrapper::after {
+            content: ''; position: absolute; top: 0; z-index: 2;
+            border-left: 140px solid #ff85a1; border-right: 140px solid transparent;
+            border-top: 90px solid transparent; border-bottom: 90px solid #ff85a1;
+            border-bottom-left-radius: 12px;
+        }
+        .top-flap {
+            position: absolute; top: 0; width: 0; height: 0;
+            border-left: 140px solid transparent; border-right: 140px solid transparent;
+            border-top: 100px solid var(--ui-border);
+            transform-origin: top; z-index: 4; transition: transform 0.4s ease-in-out;
+        }
+        .heart-seal {
+            position: absolute; top: 70px; left: 125px; width: 30px; height: 30px;
+            background-color: #fff; transform: rotate(-45deg); z-index: 5;
+            animation: jitter 0.3s infinite alternate;
+        }
+        .heart-seal::before, .heart-seal::after {
+            content: ''; position: absolute; width: 30px; height: 30px; background-color: #fff; border-radius: 50%;
+        }
+        .heart-seal::before { top: -15px; left: 0; }
+        .heart-seal::after { left: 15px; top: 0; }
+
+        @keyframes jitter {
+            0% { transform: scale(1) rotate(-43deg); }
+            100% { transform: scale(1.1) rotate(-47deg); }
+        }
+
+        .envelope-wrapper.open .top-flap { transform: rotateX(180deg); z-index: 1; }
+        .envelope-wrapper.open .heart-seal { opacity: 0; }
+        .envelope-wrapper.fade-out { opacity: 0; transform: scale(0) rotate(180deg); pointer-events: none; position: absolute; }
+
+        /* 🎮 CHAOTIC GAME UI PANEL */
+        .game-container {
+            display: none;
+            width: 90%;
+            max-width: 460px;
+            background: var(--panel-bg);
+            border: 4px solid var(--ui-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 8px 8px 0px var(--ui-shadow);
+            text-align: center;
+            box-sizing: border-box;
+            z-index: 5;
+        }
+
+        .game-hud {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--ui-border);
+            border-bottom: 3px dashed var(--ui-border);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .dialogue-text {
+            color: var(--text-color);
+            font-size: 1.2rem;
+            line-height: 1.6;
+            min-height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            background: #fff0f3;
+            border: 2px dashed var(--ui-shadow);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .ui-btn {
+            background-color: var(--ui-border);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 32px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0px #c9184a;
+            transition: transform 0.05s ease;
+        }
+        .ui-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0px transparent;
+        }
+
+        .chaos-hint {
+            display: none;
+            font-size: 0.8rem;
+            color: var(--ui-border);
+            margin-top: 15px;
+            animation: pulseText 0.6s infinite alternate;
+        }
+        @keyframes pulseText { from { opacity: 0.4; } to { opacity: 1; } }
+
+        /* 🌪️ FLOATING EMOJI SPAM ELEMENT */
+        .emoji-burst {
+            position: absolute;
+            pointer-events: none;
+            font-size: 2.5rem;
+            z-index: 9999;
+            animation: explodeAndFade 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes explodeAndFade {
+            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+            50% { opacity: 1; }
+            100% { transform: translate(var(--mx), var(--my)) scale(1.2) rotate(var(--rot)); opacity: 0; }
+        }
+    </style>
+</head>
+<body id="mainBody">
+
+    <audio id="bgSong" src="https://drive.google.com/uc?export=open&id=1JWtQAqX7xe8uV-PX6CNlqh6xpV6S3NjI" loop></audio>
+
+    <div class="envelope-wrapper" id="envelope" onclick="openEnvelope()">
+        <div class="top-flap"></div>
+        <div class="heart-seal"></div>
+    </div>
+
+    <div class="game-container" id="gameUI">
+        <div class="game-hud">
+            <span>✨ HP: 999/999</span>
+            <span id="progressCheck">PAGE: 1/4</span>
+        </div>
+        
+        <div class="dialogue-text" id="dialogueBox">Loading Letter System...</div>
+
+        <button class="ui-btn" id="nextBtn" onclick="nextStep(event)">HIT NEXT ➡️</button>
+        <div class="chaos-hint" id="clickHint">💥 TOTAL CHAOS UNLOCKED! RAMPAGE TAP THE SCREEN! 💥</div>
+    </div>
+
+    <script>
+        // 📝 SCRIPT TEXT LINE BY LINE
+        const script = [
+            "HAPPY BIRTHDAY TO MY ABSOLUTE FAVORITE HUMAN! 🎂 (Hit next to run code...)",
+            "Every single day spent dealing with you is an absolute critical hit. You make life a million times brighter! 🔥🎰",
+            "I'm incredibly lucky to have you around to match my exact level of weirdness. Thanks for being my player two! 🗺️👾",
+            "May your day be filled with total chaos, way too much sugar, and endless love. Happy Birthday, gorgeous! 🏆👑💖"
+        ];
+
+        let currentStep = 0;
+        let finalChaosMode = false;
+        let audioCtx = null;
+
+        // 🎵 Synthesizes a rapid retro game beep on interaction
+        function playChiptune(freq, type, duration) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type || 'square';
+                osc.frequency.setValueAtTime(freq || 440, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e){}
+        }
+
+        // 💥 APPLIES SCREEN JOLT EFFECTS
+        function triggerScreenShake() {
+            const container = document.getElementById('gameUI');
+            const body = document.getElementById('mainBody');
+            container.classList.add('shake');
+            body.classList.add('shake');
+            setTimeout(() => {
+                container.classList.remove('shake');
+                body.classList.remove('shake');
+            }, 150);
+        }
+
+        // 🌪️ CREATES BURST OF FLYING EMOJIS
+        function spawnEmojiChaos(x, y) {
+            const emojiPool = ['💖', '🎂', '🎉', '🎁', '⚡', '💥', '👾', '👑', '🔥', '🍭', '🥳', '🐱'];
+            const count = 12; 
+
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.className = 'emoji-burst';
+                el.innerText = emojiPool[Math.floor(Math.random() * emojiPool.length)];
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+
+                // Calculate highly randomized blast paths
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 80 + Math.random() * 120;
+                const moveX = Math.cos(angle) * distance;
+                const moveY = Math.sin(angle) * distance - 50; // Tendency to blast upward
+                const rotation = (Math.random() - 0.5) * 720;
+
+                el.style.setProperty('--mx', `${moveX}px`);
+                el.style.setProperty('--my', `${moveY}px`);
+                el.style.setProperty('--rot', `${rotation}deg`);
+
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 800);
+            }
+        }
+
+        function openEnvelope() {
+            playChiptune(587.33, 'triangle', 0.25); // Retro chord jingle
+            setTimeout(() => playChiptune(880, 'square', 0.15), 100);
+
+            const envelope = document.getElementById('envelope');
+            envelope.classList.add('open');
+            
+            setTimeout(() => {
+                envelope.classList.add('fade-out');
+                const gameUI = document.getElementById('gameUI');
+                gameUI.style.display = 'block';
+                updateDialogue();
+                
+                // Massive intro screen shockwave
+                confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+                triggerScreenShake();
+            }, 400);
+        }
+
+        function updateDialogue() {
+            document.getElementById('dialogueBox').innerText = script[currentStep];
+            document.getElementById('progressCheck').innerText = `PAGE: ${currentStep + 1}/${script.length}`;
+        }
+
+        function nextStep(event) {
+            event.stopPropagation(); // Avoid double triggering the body click event
+            currentStep++;
+
+            // Play retro sound updates
+            playChiptune(600 + (currentStep * 100), 'square', 0.08);
+            triggerScreenShake();
+            spawnEmojiChaos(event.clientX, event.clientY);
+
+            if (currentStep < script.length) {
+                updateDialogue();
+                // Random side-fountains confetti
+                confetti({ particleCount: 30, angle: currentStep % 2 === 0 ? 45 : 135, spread: 50, origin: { x: currentStep % 2 === 0 ? 0 : 1 } });
+            } else {
+                // END STAGE UNLOCKED
+                document.getElementById('dialogueBox').innerHTML = "🏆 MAX LEVEL UNLOCKED! 🏆<br><br>The Birthday Quest is Complete! You are the ultimate prize.";
+                document.getElementById('nextBtn').innerText = "LOOP STORY 🔄";
+                document.getElementById('progressCheck').innerText = "QUEST: SUCCESS";
+                document.getElementById('clickHint').style.display = 'block';
+                
+                // Endless end game loop cycle triggers
+                finalChaosMode = true;
+                currentStep = -1; 
+                triggerMegaEndgameExplosion();
+            }
+        }
+
+        function triggerMegaEndgameExplosion() {
+            let duration = 2 * 1000;
+            let end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff477e', '#ffccd5'] });
+                confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff477e', '#ffccd5'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        // Global monitor tracking background clicks
+        document.body.addEventListener('click', (e) => {
+            // Play quick structural noise click
+            playChiptune(150 + Math.random() * 600, 'noise', 0.04);
+            
+            // Throw micro particles
+            confetti({
+                particleCount: 15,
+                spread: 30,
+                origin: { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight }
+            });
+
+            // Throw active emoji clusters
+            spawnEmojiChaos(e.clientX, e.clientY);
+            
+            if (finalChaosMode) {
+                triggerScreenShake();
+            }
+        });
+    </script>
+</body>
+</html>
