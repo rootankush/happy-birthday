@@ -272,9 +272,13 @@
         function openEnvelope() {
 
             const song = document.getElementById('bgSong');
-            if (song) {
-                song.play().catch(e => console.log("Audio playback blocked or failed:", e));
-            }
+    
+            song.play().then(() => {
+                console.log("Playback started!");
+            }).catch(e => {
+                console.error("Audio failed:", e);
+        // You could add: alert("Could not play music. Check console!");
+            });
 
             
             playChiptune(587.33, 'triangle', 0.25); // Retro chord jingle
