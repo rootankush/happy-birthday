@@ -270,6 +270,13 @@
         }
 
         function openEnvelope() {
+
+            const song = document.getElementById('bgSong');
+            if (song) {
+                song.play().catch(e => console.log("Audio playback blocked or failed:", e));
+            }
+
+            
             playChiptune(587.33, 'triangle', 0.25); // Retro chord jingle
             setTimeout(() => playChiptune(880, 'square', 0.15), 100);
 
